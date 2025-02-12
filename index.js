@@ -11,8 +11,8 @@ dotenv.config();
 const app = express()
 app.use(express.json())
 app.use(cors())
-const DB_User=process.env.DB_User
-const DB_key=process.env.key
+const DB_User = process.env.DB_User
+const DB_key = process.env.key
 
 
 
@@ -209,9 +209,7 @@ app.delete("/todo", async (req, res) => {
 
 app.post('/shift', async (req, res) => {
     try {
-        const { token, id, status } = req.body
-        // console.log(token,id,status);
-        // return res.send(200,"hello")
+        const { token, id, status, targetStatus } = req.body
 
 
         if (!token) {
@@ -229,13 +227,18 @@ app.post('/shift', async (req, res) => {
             );
             try {
                 let todoItem = findUser.todolist[status].find((todoItem) => todoItem._id == id)
-                todoItem.status = status == 'todo' ? 'inProgress' : 'completed'
+                if (todoItem.status = status == targetStatus) {
+                    return res.status(400).send("cannot be performed at this moment")
+                }
+                else {
+                    todoItem.status = targetStatus
+                }
                 try {
                     const findAndMove = await Signup.updateOne(
                         { username: username },
                         {
                             $pull: { [`todolist.${status}`]: { _id: id } }, // Remove from todo
-                            $push: { [`todolist.${status == "todo" ? "inProgress" : "completed"}`]: todoItem }    // Add to completed
+                            $push: { [`todolist.${targetStatus}`]: todoItem }    // Add to completed
                         }
                     );
                     if (findAndMove) {
